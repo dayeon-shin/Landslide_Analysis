@@ -1,0 +1,267 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!-- boardImpl이 있을 경우 namespace는 자유롭게 -->
+ <!-- <mapper namespace="boardNamespace">  -->
+<mapper namespace="com.kpc.mapper.LandSlideMapper"> 
+	<resultMap id="landslideMap" type="com.kpc.landslide.LandSlideVO">	<!--  -->	
+ 		<result property="province" column="province"/>
+		<result property="city" column="city"/>
+		<result property="forecast" column="forecast"/>
+		<result property="mydate" column="mydate"/> 
+	</resultMap>
+	
+	<!-- <collection property="rlist" columnPrefix="r_" javaType="ArrayList" resultMap="replyMap" /> -->
+	
+	<!-- Main Map에 보여질 랭킹 쿼리 -->  
+	<select id="ranksi" parameterType="map" resultType="com.kpc.landslide.LandSlideVO">
+		select re.province as province
+		from (
+			select tt.rnum, tt.province, tt.cnt
+			from (
+	    		select rownum as rnum, t.*
+	    		from(
+	        		select province, count(1) as cnt
+	        		from landslide
+	        		group by province
+	        		order by cnt desc
+	    		)t
+			)tt 
+			where rnum <![CDATA[>=]]> 1 and rnum <![CDATA[<=]]> 5 ) re
+	</select>
+	
+	<select id="rankgu" parameterType="map" resultMap="landslideMap">
+		<!-- resultType="com.kpc.board.BoardVO"> -->
+		select re.city as city
+		from (
+			select tt.rnum, tt.province, tt.city, tt.cnt
+			from(
+	    		select rownum as rnum, t.*
+	    		from(
+	        		select province,city , ceil(count(decode(forecast,'주의보',1))*0.3+count(decode(forecast,'경보',1))*0.7) as cnt
+	        		from landslide
+	        		where province like #{province}
+	        		group by province, city
+	        		order by cnt desc)t
+			)tt
+			where rnum <![CDATA[>=]]> 1 and rnum <![CDATA[<=]]> 5 ) re
+	</select>
+	
+	<select id="rain" parameterType="map" resultType="com.kpc.landslide.LandSlideVO2">
+					<!-- resultType="com.kpc.board.BoardVO"> -->
+		select 
+			(select maxrainfall
+			from(
+			            select province, city, mydate, maxrainfall
+			            from weatheradd
+			            where province like #{province}  and city like #{city}||'%')
+			where mydate like '201906') as rain_2019_06,
+			(select maxrainfall
+			from(
+			            select province, city, mydate, maxrainfall
+			            from weatheradd
+			            where province like #{province}  and city like #{city}||'%')
+			where mydate like '201907') as rain_2019_07,
+			(select maxrainfall
+			from(
+			            select province, city, mydate, maxrainfall
+			            from weatheradd
+			            where province like #{province}  and city like #{city}||'%')
+			where mydate like '201908') as rain_2019_08, 
+			(select maxrainfall
+			from(
+			            select province, city, mydate, maxrainfall
+			            from weatheradd
+			            where province like #{province}  and city like #{city}||'%')
+			where mydate like '202006') as rain_2020_06,
+			(select maxrainfall
+			from(
+			            select province, city, mydate, maxrainfall
+			            from weatheradd
+			            where province like #{province}  and city like #{city}||'%')
+			where mydate like '202007')as rain_2020_07,
+			(select maxrainfall
+			from(
+			            select province, city, mydate, maxrainfall
+			            from weatheradd
+			            where province like #{province}  and city like #{city})
+			where mydate like '202008')as rain_2020_08
+		from dual
+
+
+	</select>
+	<select id="mountain" parameterType="map" resultType="com.kpc.landslide.LandSlideVO3">
+					<!-- resultType="com.kpc.board.BoardVO"> -->
+		select (
+			select count(forecast) 
+			from (
+			        select *
+			        from landslide
+			        where substr(mydate,1,4) like '2019'and substr(mydate,6,2) like '06')
+			where province like #{province}) as cnt_2019_06,
+			(
+			select count(forecast) 
+			from (
+			        select *
+			        from landslide
+			        where substr(mydate,1,4) like '2019'and substr(mydate,6,2) like '07')
+			where province like #{province}) as cnt_2019_07,
+			(
+			select count(forecast)
+			from (
+			        select *
+			        from landslide
+			        where substr(mydate,1,4) like '2019'and substr(mydate,6,2) like '08')
+			where province like #{province}) as cnt_2019_08,
+			(
+			select count(forecast) 
+			from (
+			        select *
+			        from landslide
+			        where substr(mydate,1,4) like '2020'and substr(mydate,6,2) like '06')
+			where province like #{province}) as cnt_2020_06,
+			(
+			select count(forecast) 
+			from (
+			        select *
+			        from landslide
+			        where substr(mydate,1,4) like '2020'and substr(mydate,6,2) like '07')
+			where province like #{province}) as cnt_2020_07,
+			(
+			select count(forecast) 
+			from (
+			        select *
+			        from landslide
+			        where substr(mydate,1,4) like '2020'and substr(mydate,6,2) like '08')
+			where province like #{province}) as cnt_2020_08
+		from dual
+					
+	</select>	
+	
+	<select id="temp" parameterType="map" resultType="com.kpc.landslide.LandSlideVO2">
+					<!-- resultType="com.kpc.board.BoardVO"> -->	
+		select 			
+			(select avgmaxtemp
+			from(
+			            select province, city, mydate, avgmaxtemp
+			            from weatheradd
+			            where province like #{province}  and city like #{city}||'%')
+			where mydate like '201906') as rain_2019_06,
+			(select avgmaxtemp
+			from(
+			            select province, city, mydate, avgmaxtemp
+			            from weatheradd
+			            where province like #{province}  and city like #{city}||'%')
+			where mydate like '201907') as rain_2019_07,
+			(select avgmaxtemp
+			from(
+			            select province, city, mydate, avgmaxtemp
+			            from weatheradd
+			            where province like #{province}  and city like #{city}||'%')
+			where mydate like '201908') as rain_2019_08, 
+			(select avgmaxtemp
+			from(
+			            select province, city, mydate, avgmaxtemp
+			            from weatheradd
+			            where province like #{province}  and city like #{city}||'%')
+			where mydate like '202006') as rain_2020_06,
+			(select avgmaxtemp
+			from(
+			            select province, city, mydate, avgmaxtemp
+			            from weatheradd
+			            where province like #{province}  and city like #{city}||'%')
+			where mydate like '202007')as rain_2020_07,
+			(select avgmaxtemp
+			from(
+			            select province, city, mydate, avgmaxtemp
+			            from weatheradd
+			            where province like #{province}  and city like #{city})
+			where mydate like '202008')as rain_2020_08
+		from dual	
+					
+	</select>
+	
+	<select id="tempmin" parameterType="map" resultType="com.kpc.landslide.LandSlideVO2">
+					<!-- resultType="com.kpc.board.BoardVO"> -->	
+			select 			
+				(select avgmintemp
+				from(
+				            select province, city, mydate, avgmintemp
+				            from weatheradd
+				            where province like #{province}  and city like #{city}||'%')
+				where mydate like '201906') as rain_2019_06,
+				(select avgmintemp
+				from(
+				            select province, city, mydate, avgmintemp
+				            from weatheradd
+				            where province like #{province}  and city like #{city}||'%')
+				where mydate like '201907') as rain_2019_07,
+				(select avgmintemp
+				from(
+				            select province, city, mydate, avgmintemp
+				            from weatheradd
+				            where province like #{province}  and city like #{city}||'%')
+				where mydate like '201908') as rain_2019_08, 
+				(select avgmintemp
+				from(
+				            select province, city, mydate, avgmintemp
+				            from weatheradd
+				            where province like #{province}  and city like #{city}||'%')
+				where mydate like '202006') as rain_2020_06,
+				(select avgmintemp
+				from(
+				            select province, city, mydate, avgmintemp
+				            from weatheradd
+				            where province like #{province}  and city like #{city}||'%')
+				where mydate like '202007')as rain_2020_07,
+				(select avgmintemp
+				from(
+				            select province, city, mydate, avgmintemp
+				            from weatheradd
+				            where province like #{province}  and city like #{city}||'%')
+				where mydate like '202008')as rain_2020_08
+			from dual	
+							
+	</select>
+	
+	<select id="donutchart2" parameterType="map" resultType="com.kpc.landslide.LandSlideVO4">
+					<!-- resultType="com.kpc.board.BoardVO"> -->
+			select					
+				(select count(1) 					
+				from(					
+				select *					
+				from landslide					
+				where province like #{province} and city like #{city}||'%' and substr(mydate,1,4) like '2020')					
+				where forecast like '경보') as k2020,					
+									
+				(select count(1)					
+				from(					
+				select *					
+				from landslide					
+				where province like #{province} and city like #{city}||'%' and substr(mydate,1,4) like '2020')					
+				where forecast like '주의보') as j2020					
+				from dual					
+						
+	</select>
+	
+	<select id="donutchart1" parameterType="map" resultType="com.kpc.landslide.LandSlideVO5">
+					<!-- resultType="com.kpc.board.BoardVO"> -->
+			select					
+				(select count(1) 					
+				from(					
+				select *					
+				from landslide					
+				where province like #{province} and city like #{city}||'%' and substr(mydate,1,4) like '2019')					
+				where forecast like '경보') as k2019,					
+									
+				(select count(1)					
+				from(					
+				select *					
+				from landslide					
+				where province like #{province} and city like #{city}||'%' and substr(mydate,1,4) like '2019')					
+				where forecast like '주의보') as j2019					
+				from dual					
+						
+	</select>
+</mapper>
+
